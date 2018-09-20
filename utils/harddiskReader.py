@@ -1,4 +1,6 @@
 import os, sys
+# TODO: Need to implement mp3 reading
+import mutagen
 
 def readFilesFromDisk(rootDir):
     for dirName, subdirList, fileList in os.walk(rootDir):

@@ -1,4 +1,5 @@
 from openpyxl import load_workbook
+from dbManager import addArtist, addAlbum, addSong
 
 class extraWorkbook():
     def __init__(self, file):
@@ -23,6 +24,28 @@ class extraSheet():
             self.readAllRows()
         else:
             emptySheet = True
+        self.addToDatabase()
+
+    def addToDatabase(self):
+        artistsAdded = []
+        albumsAdded = []
+        songsAdded = []
+        for row in self.__rows:
+            print(row)
+            if row['Band'] is not None:
+                if row['Band'] not in artistsAdded:
+                    addArtist(row['Band'])
+                    artistsAdded.append(row['Band'])
+                if row['Album'] not in albumsAdded:
+                    addAlbum(row['Album'], row['Bandcamp Link'], row['Band'])
+                    albumsAdded.append(row['Album'])
+                if row['Playable'] is None:
+                    row['Playable'] = 1
+                else: row['Playable'] = 0
+                if row['Play Count'] is None:
+                    row['Play Count'] = 0
+                addSong(row['Song'], row['Length'], row['Band'], row['Album'], row['Playable'], row['Play Count'], row['iTunes Link'])
+                songsAdded.append(row['Song'])
 
     def getRowsRead(self):
         return self.__rowsRead
@@ -40,20 +63,14 @@ class extraSheet():
     # Read every row in the file
     def readAllRows(self):
         for row in range(2, self.__sheet.max_row):
-            rowToAdd = []
-            for col in range(65, 65+len(self.__headers)):
-                cell = chr(col)+str(row)
-                rowToAdd.append(self.__sheet[cell].value)
+            rowToAdd = {}
+            for col in range(0, len(self.__headers)):
+                cell = chr(65+col)+str(row)
+                rowToAdd[self.__headers[col]]=self.__sheet[cell].value
+            if rowToAdd['Length'] is not None:
+                rowToAdd['Length'] = rowToAdd['Length'].strftime("%H:%M:%S")
             self.__rows.append(rowToAdd)
         self.__rowsRead = self.__sheet.max_row
-        print(len(self.__rows))
-        # self.displayRows()
-
-    # Method to print off each row, used mainly for testing purposes
-    def displayRows(self):
-        for row in self.__rows:
-            row = [str(x) for x in row]
-            print(' '.join(row))
 
     # Read the rows following the ones we have already read
     def readFromEnd(self):
